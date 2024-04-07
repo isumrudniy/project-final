@@ -176,4 +176,14 @@ public class TaskController {
         return new ResponseEntity<>("Task tags delete", HttpStatus.OK);
     }
 
+    @GetMapping("/{id}/time-in-work")
+    public ResponseEntity<String> getTimeInWork(@PathVariable Long id) {
+        return new ResponseEntity<>(String.format("The task with id %d was in the work for %.2f hours.", id, activityService.calcTimeInWork(id)), HttpStatus.OK);
+    }
+
+    @GetMapping("/{id}/time-in-test")
+    public ResponseEntity<String> getTimeInTest(@PathVariable Long id) {
+        return new ResponseEntity<>(String.format("The task with id %d was in the test for %.2f hours.", id, activityService.calcTimeInTest(id)), HttpStatus.OK);
+    }
+
 }

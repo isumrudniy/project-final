@@ -148,6 +148,7 @@ public class TaskService {
         return tagRepository.findById(task.getId()).orElseThrow(()-> new NotFoundException(String.format("Tags for task with id %d not found", id)));
     }
 
+    @Transactional
     public Tag addTaskTags(Tag tag) {
         Task task = handler.getRepository().getExisted(tag.getTaskId());
         if (tag.getTag().isBlank()) {
@@ -156,6 +157,7 @@ public class TaskService {
         return tagRepository.save(tag);
     }
 
+    @Transactional
     public void deleteTaskTags(Long id) {
         Task task = handler.getRepository().getExisted(id);
         tagRepository.deleteById(task.getId());

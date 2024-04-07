@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 public class Tag {
 
     @Id
-    @Column(name = "TASK_ID")
+    @Column(name = "task_id")
     private Long taskId;
     private String tag;
 

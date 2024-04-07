@@ -8,7 +8,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Stack;
 
 import static com.javarush.jira.bugtracking.task.TaskUtil.getLatestValue;
 
@@ -73,4 +76,39 @@ public class ActivityService {
             }
         }
     }
+
+    public double calcTimeInWork(long taskId) {
+        List<Activity> activities = handler.getRepository().findAllByTaskIdOrderByUpdatedAsc(taskId);
+        return calcTime(activities, "in_progress", "ready_for_review");
+    }
+
+    public double calcTimeInTest(long taskId) {
+        List<Activity> activities = handler.getRepository().findAllByTaskIdOrderByUpdatedAsc(taskId);
+        return calcTime(activities, "ready_for_review", "done");
+    }
+
+    private double calcTime(List<Activity> activities, String startStatusCode, String endStatusCode) {
+        LocalDateTime startTime = null;
+        long delay = 0;
+        long duration = 0;
+
+        for (Activity activity : activities) {
+            String statusCode = activity.getStatusCode();
+
+            if (statusCode.equalsIgnoreCase(startStatusCode)) {
+                startTime = activity.getUpdated();
+            } else if (startTime != null) {
+                long timeDiff = Duration.between(startTime, activity.getUpdated()).toMillis();
+                if (statusCode.equalsIgnoreCase(endStatusCode)) {
+                    duration += timeDiff;
+                } else {
+                    delay += timeDiff;
+                }
+                startTime = null;
+            }
+
+        }
+        return (duration + delay) / 3600000.00;
+    }
+
 }

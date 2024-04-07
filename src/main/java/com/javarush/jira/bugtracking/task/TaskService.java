@@ -40,6 +40,8 @@ public class TaskService {
     private final TaskExtMapper extMapper;
     private final UserBelongRepository userBelongRepository;
 
+    private final TagRepository tagRepository;
+
     @Transactional
     public void changeStatus(long taskId, String statusCode) {
         Assert.notNull(statusCode, "statusCode must not be null");
@@ -140,4 +142,23 @@ public class TaskService {
             throw new DataConflictException(String.format(assign ? CANNOT_ASSIGN : CANNOT_UN_ASSIGN, userType, task.getStatusCode()));
         }
     }
+
+    public Tag getTaskTags(Long id) {
+        Task task = handler.getRepository().getExisted(id);
+        return tagRepository.findById(task.getId()).orElseThrow(()-> new NotFoundException(String.format("Tags for task with id %d not found", id)));
+    }
+
+    public Tag addTaskTags(Tag tag) {
+        Task task = handler.getRepository().getExisted(tag.getTaskId());
+        if (tag.getTag().isBlank()) {
+            throw new IllegalArgumentException("Tag must be not blank");
+        }
+        return tagRepository.save(tag);
+    }
+
+    public void deleteTaskTags(Long id) {
+        Task task = handler.getRepository().getExisted(id);
+        tagRepository.deleteById(task.getId());
+    }
+
 }

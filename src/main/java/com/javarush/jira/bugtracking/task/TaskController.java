@@ -156,4 +156,24 @@ public class TaskController {
             this(taskTo, new LinkedList<>());
         }
     }
+
+    @GetMapping("/{id}/tags")
+    @ResponseStatus(HttpStatus.OK)
+    public Tag getTaskTags(@PathVariable Long id) {
+        return taskService.getTaskTags(id);
+    }
+
+    @PostMapping(value = "/tags", consumes = MediaType.APPLICATION_JSON_VALUE)
+    @ResponseStatus(HttpStatus.CREATED)
+    public Tag createTaskTags(@Valid @RequestBody Tag tag) {
+        return taskService.addTaskTags(tag);
+    }
+
+    @DeleteMapping("/{id}/tags")
+    @ResponseStatus(HttpStatus.OK)
+    public ResponseEntity<String> deleteTaskTags(@PathVariable Long id) {
+        taskService.deleteTaskTags(id);
+        return new ResponseEntity<>("Task tags delete", HttpStatus.OK);
+    }
+
 }

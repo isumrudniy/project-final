@@ -22,7 +22,6 @@ services:
     container_name: jiraDB
     build:
       context: .
-      dockerfile: Dockerfile.postgres
     image: postgres:latest
     ports:
       - "5432:5432"

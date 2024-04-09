@@ -1,3 +1,0 @@
-FROM postgres:latest
-COPY src/main/resources/data4dev/data.sql /docker-entrypoint-initdb.d/data.sql
-EXPOSE 5432

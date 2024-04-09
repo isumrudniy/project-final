@@ -6,23 +6,30 @@ services:
       context: .
       dockerfile: Dockerfile
     image: jira:latest
-    restart: always
     ports:
       - "8080:8080"
     volumes:
       - .:/app
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/jira
+      SPRING_DATASOURCE_USERNAME: jira
+      SPRING_DATASOURCE_PASSWORD: JiraRush
     depends_on:
       - db
       - nginx
 
   db:
     container_name: jiraDB
+    build:
+      context: .
+      dockerfile: Dockerfile.postgres
     image: postgres:latest
     ports:
       - "5432:5432"
     volumes:
       - ./data/db:/var/lib/postgresql/data
     environment:
+      - PGDATA=/var/lib/postgresql/data/pgdata
       - POSTGRES_USER=jira
       - POSTGRES_PASSWORD=JiraRush
       - POSTGRES_DB=jira

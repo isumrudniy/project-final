@@ -27,10 +27,11 @@ spring:
         default_batch_fetch_size: 20
         # https://stackoverflow.com/questions/21257819/what-is-the-difference-between-hibernate-jdbc-fetch-size-and-hibernate-jdbc-batc
         jdbc.batch_size: 20
+
   datasource:
     url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/jira}
-    username: ${datasource.username}
-    password: ${datasource.password}
+    username: ${SPRING_DATASOURCE_USERNAME:jira}
+    password: ${SPRING_DATASOURCE_PASSWORD:JiraRush}
     driver-class-name: org.postgresql.Driver
 
   liquibase:

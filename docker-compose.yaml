@@ -19,7 +19,7 @@ services:
       - nginx
 
   db:
-    container_name: jiraDB
+    container_name: db
     build:
       context: .
     image: postgres:latest

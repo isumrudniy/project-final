@@ -1,4 +1,4 @@
 FROM amazoncorretto:17-alpine-jdk
 MAINTAINER javarush.com
-COPY target/jira-1.0.jar jira-1.0.jar
+ARG JAR_FILE=target/*.jar
 ENTRYPOINT ["java","-jar","/jira-1.0.jar"]

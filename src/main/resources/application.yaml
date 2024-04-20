@@ -8,6 +8,8 @@ app:
     max-pool-size: 100
 
 spring:
+  config:
+    import: "classpath:application-secrets.properties"
   init:
     mode: never
   jpa:
@@ -26,8 +28,14 @@ spring:
         # https://stackoverflow.com/questions/21257819/what-is-the-difference-between-hibernate-jdbc-fetch-size-and-hibernate-jdbc-batc
         jdbc.batch_size: 20
 
+  datasource:
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/jira}
+    username: ${SPRING_DATASOURCE_USERNAME:jira}
+    password: ${SPRING_DATASOURCE_PASSWORD:JiraRush}
+    driver-class-name: org.postgresql.Driver
+
   liquibase:
-    changeLog: "classpath:/db/changelog.sql"
+    changeLog: "classpath:db/changelog.sql"
 
   # Jackson Fields Serialization
   jackson:
@@ -42,10 +50,50 @@ spring:
     cache-names: users
     caffeine.spec: maximumSize=10000,expireAfterAccess=5m
 
+  security:
+    oauth2:
+      client:
+        registration:
+          github:
+            client-id: ${github.client-id}
+            client-secret: ${github.client-secret}
+            scope:
+              - email
+          google:
+            client-id: ${google.client-id}
+            client-secret: ${google.client-secret}
+            scope:
+              - email
+              - profile
+          gitlab:
+            client-id: ${gitlab.client-id}
+            client-secret: ${gitlab.client-secret}
+            client-name: GitLab
+            redirect-uri: "{baseUrl}/login/oauth2/code/{registrationId}"
+            authorization-grant-type: authorization_code
+            scope: read_user
+        provider:
+          gitlab:
+            authorization-uri: ${gitlab.authorization-uri}
+            token-uri: ${gitlab.token-uri}
+            user-info-uri: ${gitlab.user-info-uri}
+            user-name-attribute: email
+
   sql:
     init:
       mode: always
 
+  mail:
+    properties:
+      mail:
+        smtp:
+          starttls:
+            enable: true
+          auth: true
+    host: smtp.gmail.com
+    username: ${mail.username}
+    password: ${mail.password}
+    port: 587
   thymeleaf.check-template-location: false
 
   mvc.throw-exception-if-no-handler-found: true

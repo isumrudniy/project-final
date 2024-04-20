@@ -1,33 +1,45 @@
 package com.javarush.jira.bugtracking.task;
 
+import com.javarush.jira.bugtracking.task.to.TaskToExt;
+import com.javarush.jira.bugtracking.task.to.TaskToFull;
+import com.javarush.jira.common.util.JsonUtil;
 import io.restassured.RestAssured;
 import io.restassured.http.ContentType;
 import io.restassured.response.Response;
-import lombok.RequiredArgsConstructor;
+import org.junit.Assert;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
-import org.springframework.security.test.context.support.WithUserDetails;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
-import org.springframework.test.context.jdbc.Sql;
-import org.springframework.test.context.jdbc.SqlConfig;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.junit.jupiter.Container;
+import org.testcontainers.shaded.com.fasterxml.jackson.databind.ObjectMapper;
 
-import static com.javarush.jira.login.internal.web.UserTestData.*;
+import static com.javarush.jira.bugtracking.task.TaskTestData.*;
+import static com.javarush.jira.common.util.JsonUtil.writeValue;
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.hasSize;
+
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 public class TaskControllerContainerTest {
 
+    @Value("${test.user}")
+    private String testUser;
+
+    @Value("${test.password}")
+    private String testPassword;
+
     @LocalServerPort
     private Integer port;
 
+    @Container
     static PostgreSQLContainer<?> postgreSQLContainer = new PostgreSQLContainer<>(
             "postgres:15-alpine"
     );
@@ -52,31 +64,63 @@ public class TaskControllerContainerTest {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired
+    private TaskService taskService;
+
     @BeforeEach
     void setUp() {
         RestAssured.baseURI = "http://localhost:" + port;
-//        taskRepository.deleteAll();
     }
 
     @Test
-    void shouldGetAllTask() {
-//        List<Task> tasks = List.of(
-//                new Task(900L, "Data", "epic", "in_progress", null, 1L, null),
-//                new Task(901L, "Trees", "epic", "in_progress", null, 1L, null)
-//        );
-//        taskRepository.saveAll(tasks);
-
+    void getTask() {
         Response response = given()
-                .auth().basic("admin@gmail.com", "admin")
+                .auth()
+                .preemptive()
+                .basic(testUser, testPassword)
                 .contentType(ContentType.JSON)
                 .when()
-                .get("/api/tasks/1")
+                .get("/api/tasks/" + TASK1_ID)
                 .then()
-                .statusCode(200)
-                .extract()
-                .response();
+                .extract().response();
 
-        System.out.println(response.getBody().toString());
+        Assert.assertEquals(HttpStatus.OK.value(), response.statusCode());
 
+        ObjectMapper objectMapper = new ObjectMapper();
+        TaskToFull taskToFull = JsonUtil.readValue(response.body().asString(), TaskToFull.class);
+        TASK_TO_FULL_MATCHER.assertMatch(taskToFull, taskToFull1);
     }
+
+    @Test
+    void updateTask() {
+        TaskToExt updatedTo = TaskTestData.getUpdatedTaskTo();
+
+        Response response = given()
+                .auth()
+                .preemptive()
+                .basic(testUser, testPassword)
+                .header("Content-type", "application/json")
+                .and()
+                .body(writeValue(updatedTo))
+                .when()
+                .put("/api/tasks/" + TASK2_ID)
+                .then()
+                .extract().response();
+
+        Task updated = new Task(updatedTo.getId(), updatedTo.getTitle(), updatedTo.getTypeCode(), updatedTo.getStatusCode(), updatedTo.getParentId(), updatedTo.getProjectId(), updatedTo.getSprintId());
+        TASK_MATCHER.assertMatch(taskRepository.getExisted(TASK2_ID), updated);
+    }
+
+    @Test
+    void getUnAuth() {
+        Response response = given()
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/api/tasks/" + TASK1_ID)
+                .then()
+                .extract().response();
+
+        Assert.assertEquals(HttpStatus.UNAUTHORIZED.value(), response.statusCode());
+    }
+
 }

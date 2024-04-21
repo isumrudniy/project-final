@@ -23,6 +23,7 @@ public class TaskTestData {
 
     public static final long TASK1_ID = 1;
     public static final long TASK2_ID = 2;
+    public static final long TASK3_ID = 3;
     public static final long READY_FOR_TEST_TASK_ID = 3;
     public static final long READY_FOR_REVIEW_TASK_ID = 4;
     public static final long TODO_TASK_ID = 5;

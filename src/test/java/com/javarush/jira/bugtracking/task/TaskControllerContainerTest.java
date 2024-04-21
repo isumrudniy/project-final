@@ -64,9 +64,6 @@ public class TaskControllerContainerTest {
     @Autowired
     private TaskRepository taskRepository;
 
-    @Autowired
-    private TaskService taskService;
-
     @BeforeEach
     void setUp() {
         RestAssured.baseURI = "http://localhost:" + port;
@@ -82,9 +79,8 @@ public class TaskControllerContainerTest {
                 .when()
                 .get("/api/tasks/" + TASK1_ID)
                 .then()
+                .statusCode(HttpStatus.OK.value())
                 .extract().response();
-
-        Assert.assertEquals(HttpStatus.OK.value(), response.statusCode());
 
         ObjectMapper objectMapper = new ObjectMapper();
         TaskToFull taskToFull = JsonUtil.readValue(response.body().asString(), TaskToFull.class);
@@ -105,6 +101,7 @@ public class TaskControllerContainerTest {
                 .when()
                 .put("/api/tasks/" + TASK2_ID)
                 .then()
+                .statusCode(HttpStatus.NO_CONTENT.value())
                 .extract().response();
 
         Task updated = new Task(updatedTo.getId(), updatedTo.getTitle(), updatedTo.getTypeCode(), updatedTo.getStatusCode(), updatedTo.getParentId(), updatedTo.getProjectId(), updatedTo.getSprintId());
@@ -113,14 +110,58 @@ public class TaskControllerContainerTest {
 
     @Test
     void getUnAuth() {
-        Response response = given()
+        given()
                 .contentType(ContentType.JSON)
                 .when()
                 .get("/api/tasks/" + TASK1_ID)
                 .then()
-                .extract().response();
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
+    }
 
-        Assert.assertEquals(HttpStatus.UNAUTHORIZED.value(), response.statusCode());
+    @Test
+    void deleteTask() {
+
+        given()
+                .auth()
+                .preemptive()
+                .basic(testUser, testPassword)
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/api/tasks/" + TASK3_ID)
+                .then()
+                .statusCode(HttpStatus.OK.value());
+
+        taskRepository.deleteById(TASK3_ID);
+
+        given()
+                .auth()
+                .preemptive()
+                .basic(testUser, testPassword)
+                .contentType(ContentType.JSON)
+                .when()
+                .get("/api/tasks/" + TASK3_ID)
+                .then()
+                .statusCode(HttpStatus.NOT_FOUND.value());
+
+    }
+
+    @Test
+    void updateTaskIdNotConsistent() {
+
+        TaskToExt updatedTo = TaskTestData.getUpdatedTaskTo();
+
+        given()
+                .auth()
+                .preemptive()
+                .basic(testUser, testPassword)
+                .header("Content-type", "application/json")
+                .and()
+                .body(writeValue(updatedTo))
+                .when()
+                .put("/api/tasks/" + TASK2_ID + 1)
+                .then()
+                .statusCode(HttpStatus.UNPROCESSABLE_ENTITY.value());
+
     }
 
 }
